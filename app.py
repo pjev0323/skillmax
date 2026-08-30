@@ -86,7 +86,13 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # 2. Asset Loading & Preprocessing Functions
 # -----------------------------------------------------------------------------
-nltk.download('stopwords', quiet=True)
+nltk_data_dir = os.path.join(os.path.expanduser('~'), 'nltk_data')
+if not os.path.exists(nltk_data_dir):
+    os.makedirs(nltk_data_dir)
+
+nltk.data.path.append(nltk_data_dir)
+nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)
+
 stop_words = set(stopwords.words('english'))
 
 @st.cache_resource
