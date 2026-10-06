@@ -469,7 +469,7 @@ md("""
 <div class="sm-nav"><div class="sm-nav-inner">
   <div class="sm-brand">
     <div class="sm-logo"><i class="fa-solid fa-bolt"></i></div>
-    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos</span></div>
+    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos College of IT</span></div>
   </div>
   <div class="sm-links">
     <a href="#overview" data-scroll="overview">DATA SCIENCE PROJECT 2026</a>
