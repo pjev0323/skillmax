@@ -1,309 +1,252 @@
-import streamlit as st
-import joblib
-import re
-import nltk
-import pandas as pd
+import html as _html
 import os
+import re
+
+import joblib
+import nltk
 import numpy as np
-import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
 import streamlit.components.v1 as components
 from nltk.corpus import stopwords
 
-# -----------------------------------------------------------------------------
-# 1. Page Configuration & Full UI Overrides
-# -----------------------------------------------------------------------------
+
+# -------------------------
+#  PAGE CONFIGURATION AREA
+# -------------------------
 st.set_page_config(
     page_title="SkillMax AI Dashboard",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed",
 )
 
-# Deep Cosmic Theme & Header Styling (Exact match to Preview HTML)
-st.markdown("""
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-    
-    html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
-    }
 
-    /* Hide Streamlit Default Top Header & Adjust Padding */
-    header[data-testid="stHeader"] {
-        display: none !important;
-    }
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 1280px !important;
-    }
+def md(markup: str):
+    """Render raw HTML via st.markdown.
 
-    /* Background Canvas */
-    .stApp {
-        background-color: #080511 !important;
-        background-image: 
-            radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.3) 0%, transparent 60%),
-            radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 40%);
-        color: #F8FAFC;
-    }
+    Strips indentation and blank lines so the markdown parser never turns
+    indented HTML into code blocks.
+    """
+    cleaned = "\n".join(
+        line.strip() for line in markup.strip().splitlines() if line.strip()
+    )
+    st.markdown(cleaned, unsafe_allow_html=True)
 
-    /* Sidebar Styling */
-    section[data-testid="stSidebar"] {
-        background-color: #0C0716 !important;
-        border-right: 1px solid rgba(168, 85, 247, 0.18) !important;
-    }
 
-    /* Custom Top Navigation Header Bar */
-    .top-nav-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 24px;
-        background: rgba(8, 5, 17, 0.85);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(168, 85, 247, 0.2);
-        border-radius: 50px;
-        margin-bottom: 30px;
-    }
-    
-    .brand-logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .brand-icon {
-        width: 36px;
-        height: 36px;
-        background: linear-gradient(135deg, #8B5CF6, #38BDF8);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 800;
-        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-    }
-    .brand-title {
-        font-size: 1.15rem;
-        font-weight: 800;
-        background: linear-gradient(120deg, #FFFFFF, #E9D5FF, #38BDF8);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .brand-sub {
-        font-size: 0.7rem;
-        color: rgba(216, 180, 254, 0.7);
-        margin-top: -3px;
-    }
+# --------------------------------
+#  THEME LAYOUT UI GAMIT CSS AREA
+# --------------------------------
+THEME_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
-    /* Hero Section Header (Centered) */
-    .hero-center {
-        text-align: center;
-        max-width: 850px;
-        margin: 0 auto 15px auto;
-        padding: 10px 20px;
-    }
+html, body, [class*="css"], .stApp { font-family: 'Plus Jakarta Sans', sans-serif !important; }
 
-    .hero-badge-pill {
-        display: inline-block;
-        background: rgba(168, 85, 247, 0.12);
-        border: 1px solid rgba(168, 85, 247, 0.3);
-        color: #C084FC;
-        padding: 6px 18px;
-        border-radius: 30px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        margin-bottom: 18px;
-    }
+/* ---- Hide Streamlit chrome ---- */
+header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"], [data-testid="stDecoration"], [data-testid="stToolbar"],
+[data-testid="stStatusWidget"], #MainMenu, footer { display: none !important; }
 
-    .hero-title-main {
-        font-size: 3.2rem !important;
-        font-weight: 800;
-        line-height: 1.15;
-        letter-spacing: -1px;
-        color: #FFFFFF;
-        margin-bottom: 16px;
-    }
+.stApp { background: #080511 !important; color: #F8FAFC; }
+[data-testid="stMain"], section.main { scroll-behavior: smooth; }
+.block-container { max-width: 1280px !important; padding: 5.75rem 1.5rem 2rem !important; }
+[data-testid="stVerticalBlock"] { gap: 1.5rem; }
+::selection { background: #8B5CF6; color: #fff; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #080511; }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,.6); }
+.anchor-target { scroll-margin-top: 96px; }
+[data-testid="stAlert"] { border-radius: 16px; }
 
-    .hero-gradient-text {
-        background: linear-gradient(120deg, #D8B4FE 0%, #38BDF8 50%, #A855F7 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+/* ---- Fixed top navigation ---- */
+.sm-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 999990; backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); background: rgba(8,5,17,.8); border-bottom: 1px solid rgba(168,85,247,.12);
+  padding: 16px 24px; }
+.sm-nav-inner { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.sm-brand { display: flex; align-items: center; gap: 12px; }
+.sm-logo { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(to top right,#8B5CF6,#38BDF8);
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(139,92,246,.35);
+  color: #fff; font-size: 18px; }
+.sm-brand-name { display: block; font-size: 20px; line-height: 28px; font-weight: 800; letter-spacing: -.025em;
+  background: linear-gradient(to right,#fff,#e9d5ff,#38BDF8); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent; width: fit-content; }
+.sm-brand-sub { display: block; font-size: 12px; line-height: 16px; font-weight: 500; color: rgba(216,180,254,.7); margin-top: -4px; }
+.sm-links { display: flex; gap: 32px; font-size: 14px; font-weight: 600; }
+.sm-links a { color: #cbd5e1 !important; text-decoration: none !important; transition: color .2s; }
+.sm-links a:hover { color: #38BDF8 !important; }
+.sm-right { display: flex; align-items: center; gap: 16px; }
+.sm-status { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 12px;
+  font-weight: 600; background: rgba(139,92,246,.1); color: #38BDF8; border: 1px solid rgba(139,92,246,.3); }
+.sm-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; margin-right: 8px; animation: smPing 2s cubic-bezier(.4,0,.6,1) infinite; }
+@keyframes smPing { 50% { opacity: .5; } }
+@media (max-width: 900px) { .sm-links { display: none; } }
+@media (max-width: 640px) { .sm-status { display: none; } }
 
-    .hero-desc {
-        color: #94A3B8;
-        font-size: 1.05rem;
-        font-weight: 500;
-        margin-bottom: 10px;
-        line-height: 1.6;
-    }
+/* ---- Hero ---- */
+.st-key-hero { position: relative; overflow: hidden; gap: 0 !important; padding: 80px 24px 64px;
+  background: radial-gradient(circle at 50% 120%, rgba(139,92,246,.35) 0%, rgba(56,189,248,.15) 35%, rgba(8,5,17,0) 70%); }
+.st-key-hero > div { position: relative; z-index: 2; }
+.sm-globe { position: absolute; top: 0; left: 0; right: 0; margin: 0 auto; pointer-events: none; z-index: 1;
+  animation: smPulse 6s ease-in-out infinite; }
+@keyframes smPulse { 0%,100% { opacity: .6; transform: scale(1); } 50% { opacity: .85; transform: scale(1.02); } }
+.sm-hero { text-align: center; }
+.sm-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 9999px;
+  background: rgba(15,23,42,.8); border: 1px solid rgba(168,85,247,.3); color: #d8b4fe; font-size: 12px;
+  line-height: 16px; font-weight: 600; margin-bottom: 24px; box-shadow: 0 10px 15px -3px rgba(0,0,0,.2);
+  backdrop-filter: blur(4px); }
+.sm-badge i { color: #38BDF8; }
+.sm-title { font-size: 60px; line-height: 1.25; font-weight: 800; letter-spacing: -.025em; color: #fff; margin-bottom: 16px; }
+.sm-title .grad { background: linear-gradient(to right,#d8b4fe,#38BDF8,#8B5CF6); -webkit-background-clip: text;
+  background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.sm-desc { max-width: 672px; margin: 0 auto 32px; font-size: 18px; line-height: 28px; font-weight: 500; color: #94a3b8; }
+@media (max-width: 768px) { .sm-title { font-size: 36px; } .sm-desc { font-size: 16px; line-height: 24px; } }
 
-    /* Glassmorphic Interactive Cards */
-    .glass-card {
-        background: rgba(18, 12, 32, 0.65);
-        border: 1px solid rgba(168, 85, 247, 0.18);
-        border-radius: 20px;
-        padding: 24px;
-        backdrop-filter: blur(16px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        margin-bottom: 20px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+/* ---- Buttons (shared) ---- */
+.stButton button, .stDownloadButton button { font-family: inherit !important; border-radius: 9999px !important;
+  transition: all .25s cubic-bezier(.4,0,.2,1) !important; white-space: nowrap; line-height: 1.2; outline: none !important; }
+.stButton button p, .stDownloadButton button p { margin: 0 !important; font-size: inherit !important;
+  font-weight: inherit !important; color: inherit !important; }
+.stButton button:disabled, .stDownloadButton button:disabled { opacity: .45; cursor: not-allowed; }
 
-    .glass-card:hover {
-        border-color: rgba(192, 132, 252, 0.4);
-        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.18);
-    }
+/* Reset */
+.st-key-btn_reset { display: flex !important; flex-direction: column; align-items: flex-end; }
+.st-key-btn_reset button { height: auto; min-height: 0; padding: 6px 16px; font-size: 12px; font-weight: 600;
+  color: #d8b4fe !important; background: rgba(88,28,135,.3) !important; border: 1px solid rgba(168,85,247,.3) !important; }
+.st-key-btn_reset button:hover { color: #fff !important; background: rgba(107,33,168,.4) !important; border-color: rgba(168,85,247,.3) !important; }
 
-    /* Buttons Override */
-    div.stButton > button {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    
-    div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, #8B5CF6 0%, #38BDF8 100%) !important;
-        color: #FFFFFF !important;
-        border: none !important;
-        border-radius: 30px !important;
-        font-weight: 700 !important;
-        padding: 12px 28px !important;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4) !important;
-    }
+/* Analyze */
+.st-key-btn_analyze, .st-key-btn_analyze [data-testid="stButton"] { width: 100%; }
+.st-key-btn_analyze button { width: 100%; height: 48px; font-size: 14px; font-weight: 800; color: #fff !important; border: none !important;
+  background: linear-gradient(to right,#8B5CF6,#9333ea,#38BDF8) !important; }
+.st-key-btn_analyze button:hover { box-shadow: 0 0 25px rgba(139,92,246,.4) !important; color: #fff !important; }
+.st-key-btn_analyze button:active { transform: scale(.95); }
 
-    div.stButton > button[kind="primary"]:hover {
-        box-shadow: 0 0 28px rgba(56, 189, 248, 0.65) !important;
-        transform: translateY(-2px) scale(1.01) !important;
-    }
+/* Banner buttons + download */
+.st-key-btn_chart button { height: 40px; padding: 0 20px; font-size: 12px; font-weight: 700; color: #fff !important;
+  background: #0f172a !important; border: 1px solid rgba(168,85,247,.3) !important; width: 100%; }
+.st-key-btn_chart button:hover { border-color: #c084fc !important; color: #fff !important; }
+.st-key-btn_skills button, .st-key-btn_download button { height: 40px; padding: 0 20px; font-size: 12px; font-weight: 700;
+  color: #fff !important; border: none !important; background: linear-gradient(to right,#8B5CF6,#38BDF8) !important;
+  box-shadow: 0 4px 20px rgba(139,92,246,.35) !important; width: 100%; }
+.st-key-btn_skills button:hover, .st-key-btn_download button:hover { opacity: .9; color: #fff !important; }
+.st-key-btn_download { display: flex !important; flex-direction: column; align-items: flex-end; }
+.st-key-btn_download [data-testid="stDownloadButton"] { width: 100%; }
 
-    div.stButton > button[kind="secondary"] {
-        background: rgba(255, 255, 255, 0.04) !important;
-        color: #C084FC !important;
-        border: 1px solid rgba(168, 85, 247, 0.3) !important;
-        border-radius: 30px !important;
-        font-weight: 600 !important;
-    }
+/* ---- Pill tab bar ---- */
+.st-key-tabbar { background: rgba(2,6,23,.8); border: 1px solid rgba(168,85,247,.2); border-radius: 9999px;
+  padding: 6px; backdrop-filter: blur(12px); }
+.st-key-tabbar [data-testid="stHorizontalBlock"] { gap: 8px; }
+.st-key-tabbar button { width: 100%; height: 40px; padding: 0 16px; font-size: 12px; font-weight: 700; border: none !important; }
+.st-key-tabbar button:is([kind="secondary"], [data-testid="stBaseButton-secondary"]) { background: transparent !important; color: #94a3b8 !important; }
+.st-key-tabbar button:is([kind="secondary"], [data-testid="stBaseButton-secondary"]):hover { color: #fff !important; }
+.st-key-tabbar button:is([kind="primary"], [data-testid="stBaseButton-primary"]) { color: #fff !important;
+  background: linear-gradient(to right,#8B5CF6,#7e22ce) !important; box-shadow: 0 4px 20px rgba(139,92,246,.35) !important; }
+.sm-qs-label { font-size: 12px; font-weight: 700; color: #d8b4fe; text-transform: uppercase; letter-spacing: .05em; text-align: right; white-space: nowrap; }
 
-    div.stButton > button[kind="secondary"]:hover {
-        background: rgba(168, 85, 247, 0.2) !important;
-        color: #F8FAFC !important;
-        border-color: #C084FC !important;
-        box-shadow: 0 0 18px rgba(168, 85, 247, 0.35) !important;
-        transform: translateY(-2px) !important;
-    }
+/* ---- Quick sample select ---- */
+.st-key-sample_choice [data-baseweb="select"] > div { background: #0f172a !important; border: 1px solid rgba(168,85,247,.3) !important;
+  border-radius: 9999px !important; min-height: 38px; }
+.st-key-sample_choice [data-baseweb="select"] > div:focus-within { border-color: #38BDF8 !important; }
+.st-key-sample_choice [data-baseweb="select"] div, .st-key-sample_choice [data-baseweb="select"] span { color: #e2e8f0 !important; font-size: 12px; font-weight: 500; }
+.st-key-sample_choice svg { fill: #C084FC; }
+[data-baseweb="popover"] ul, [data-baseweb="popover"] [data-baseweb="menu"] { background: #0f172a !important; }
+[data-baseweb="popover"] li { color: #e2e8f0 !important; font-size: 13px; }
+[data-baseweb="popover"] li:hover { background: rgba(139,92,246,.25) !important; }
 
-    /* Skill Tag Badges */
-    .skill-pill {
-        display: inline-flex;
-        align-items: center;
-        background: rgba(139, 92, 246, 0.12);
-        color: #38BDF8;
-        border: 1px solid rgba(168, 85, 247, 0.35);
-        padding: 7px 16px;
-        margin: 5px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        transition: all 0.25s ease;
-        cursor: pointer;
-    }
+/* ---- Glass panels ---- */
+.glass-panel, [class*="st-key-panel_"] { background: rgba(18,12,32,.65); backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(168,85,247,.18); border-radius: 20px; padding: 24px; transition: all .3s; }
+.glass-panel:hover, [class*="st-key-panel_"]:hover { border-color: rgba(192,132,252,.4); box-shadow: 0 10px 30px rgba(139,92,246,.18); }
+.st-key-panel_banner { border-left: 4px solid #8B5CF6 !important; }
 
-    .skill-pill:hover {
-        background: rgba(56, 189, 248, 0.2);
-        border-color: #38BDF8;
-        color: #FFFFFF;
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-        transform: translateY(-2px) scale(1.03);
-    }
+.sm-h3 { display: flex; align-items: center; font-size: 18px; line-height: 28px; font-weight: 700; color: #fff; }
+.sm-h3 i { margin-right: 8px; }
+.sm-sub { font-size: 12px; line-height: 16px; color: #94a3b8; margin-top: 6px; }
+.sm-h3s { font-size: 14px; line-height: 20px; font-weight: 700; color: #d8b4fe; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 16px; }
+.sm-h3s i { margin-right: 8px; }
 
-    /* Workspace Navigation Tabs */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: rgba(12, 7, 22, 0.85);
-        padding: 6px;
-        border-radius: 30px;
-        border: 1px solid rgba(168, 85, 247, 0.2);
-    }
+/* Text input */
+.st-key-input_widget [data-baseweb="textarea"], .st-key-input_widget [data-baseweb="base-input"], .st-key-input_widget textarea { background: rgba(2,6,23,.8) !important; }
+.st-key-input_widget [data-baseweb="textarea"] { border: 1px solid rgba(168,85,247,.2) !important; border-radius: 16px !important; }
+.st-key-input_widget [data-baseweb="textarea"]:focus-within { border-color: #8B5CF6 !important; box-shadow: 0 0 0 1px #8B5CF6 !important; }
+.st-key-input_widget textarea { color: #e2e8f0 !important; font-size: 14px !important; line-height: 20px !important; padding: 16px !important; font-family: inherit !important; }
+.st-key-input_widget textarea::placeholder { color: #475569 !important; }
+.st-key-input_widget [data-testid="InputInstructions"] { color: #475569; }
 
-    .stTabs [data-baseweb="tab"] {
-        border-radius: 20px;
-        padding: 8px 22px;
-        color: #94A3B8;
-        font-weight: 600;
-        transition: all 0.25s ease;
-    }
+/* Stats + context */
+.sm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.sm-stat { background: rgba(2,6,23,.6); padding: 16px; border-radius: 12px; border: 1px solid rgba(168,85,247,.1); text-align: center; }
+.sm-stat-n { display: block; font-size: 30px; line-height: 36px; font-weight: 800; color: #fff; }
+.sm-stat-l { display: block; font-size: 10px; line-height: 16px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+.sm-ctx-row { display: flex; justify-content: space-between; font-size: 12px; line-height: 16px; font-weight: 500; color: #cbd5e1;
+  padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid rgba(30,41,59,.8); gap: 12px; }
+.sm-ctx-row:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.sm-ctx-k { color: #94a3b8; } .sm-ctx-v { font-weight: 700; color: #e9d5ff; text-align: right; }
 
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #8B5CF6 0%, #38BDF8 100%) !important;
-        color: #FFFFFF !important;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-    }
+/* Results banner */
+.sm-pill { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 10px; line-height: 16px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .1em; background: rgba(88,28,135,.6); color: #38BDF8; border: 1px solid rgba(168,85,247,.4); margin-bottom: 8px; }
+.sm-role { font-size: 30px; line-height: 36px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 12px; }
+.sm-meta { font-size: 12px; line-height: 16px; color: #94a3b8; margin-top: 4px; }
 
-    /* Quick Stat Cards */
-    .stat-box {
-        background: rgba(12, 7, 22, 0.85);
-        border-radius: 14px;
-        padding: 16px;
-        border: 1px solid rgba(168, 85, 247, 0.18);
-        text-align: center;
-        transition: all 0.3s ease;
-    }
+/* Ranking table */
+.stMarkdown table.sm-table { width: 100%; border-collapse: collapse; font-size: 12px; color: #cbd5e1; text-align: left; margin: 0; }
+.stMarkdown table.sm-table th { padding: 10px 8px !important; font-size: 10px; font-weight: 700; text-transform: uppercase;
+  color: #e9d5ff; border: none !important; border-bottom: 1px solid rgba(168,85,247,.2) !important; background: transparent !important; }
+.stMarkdown table.sm-table td { padding: 10px 8px !important; font-weight: 500; border: none !important;
+  border-top: 1px solid rgba(30,41,59,.6) !important; background: transparent !important; }
+.stMarkdown table.sm-table tbody tr:first-child td { border-top: none !important; }
+.stMarkdown table.sm-table tbody tr:hover td { background: rgba(59,7,100,.2) !important; }
+.stMarkdown table.sm-table .r { text-align: right; }
+.stMarkdown table.sm-table .role { font-weight: 700; color: #e2e8f0; }
+.stMarkdown table.sm-table .score { font-family: ui-monospace, monospace; color: #38BDF8; }
+.stMarkdown table.sm-table .fit { font-family: ui-monospace, monospace; color: #d8b4fe; }
+.sm-table-foot { padding-top: 16px; margin-top: 16px; border-top: 1px solid rgba(168,85,247,.1); text-align: center; font-size: 10px; color: #64748b; }
+.sm-chart-empty { height: 320px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 12px; font-style: italic; }
 
-    .stat-box:hover {
-        border-color: rgba(168, 85, 247, 0.45);
-        background: rgba(18, 12, 32, 0.8);
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #F8FAFC;
-    }
-    
-    .stat-label {
-        font-size: 0.75rem;
-        color: #A855F7;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+/* Skills */
+.sm-skillbox { display: flex; flex-wrap: wrap; gap: 10px; padding: 16px; background: rgba(2,6,23,.6); border-radius: 16px;
+  border: 1px solid rgba(168,85,247,.15); min-height: 120px; align-items: center; }
+.skill-badge { display: inline-flex; align-items: center; padding: 8px 16px; border-radius: 9999px; font-size: 12px; font-weight: 600;
+  background: rgba(59,7,100,.6); color: #38BDF8; border: 1px solid rgba(168,85,247,.3); cursor: pointer;
+  transition: all .25s cubic-bezier(.4,0,.2,1); }
+.skill-badge i { font-size: 10px; margin-right: 6px; color: #8B5CF6; }
+.skill-badge:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 0 15px rgba(56,189,248,.5); border-color: #38BDF8; color: #fff; }
+.sm-empty { color: #64748b; font-size: 12px; font-style: italic; }
 
-    /* Prediction Category Card */
-    .prediction-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #8B5CF6 0%, #38BDF8 100%);
-        color: #FFFFFF;
-        padding: 6px 18px;
-        border-radius: 30px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.8px;
-        text-transform: uppercase;
-        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-        margin-bottom: 12px;
-    }
+/* Debug */
+.sm-debug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+@media (max-width: 768px) { .sm-debug-grid { grid-template-columns: 1fr; } }
+.sm-debug-label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+.sm-debug-box { background: rgba(2,6,23,.8); padding: 16px; border-radius: 12px; font-size: 12px; font-family: ui-monospace, monospace;
+  height: 192px; overflow-y: auto; line-height: 1.625; white-space: pre-wrap; word-break: break-word; }
 
-    .predicted-role-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #F8FAFC;
-        margin-bottom: 8px;
-    }
-    </style>
-""", unsafe_allow_html=True)
+/* Footer */
+.sm-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; border-top: 1px solid rgba(168,85,247,.1);
+  padding: 32px 0 8px; margin-top: 40px; font-size: 12px; color: #64748b; }
+.sm-footer strong { color: #cbd5e1; }
 
-# -----------------------------------------------------------------------------
-# 2. Asset Loading & Preprocessing
-# -----------------------------------------------------------------------------
-nltk_data_dir = os.path.join(os.path.expanduser('~'), 'nltk_data')
-if not os.path.exists(nltk_data_dir):
-    os.makedirs(nltk_data_dir)
+/* Zero-height JS helper iframe */
+[data-testid="stElementContainer"]:has(iframe[height="0"]) { position: absolute; width: 0; height: 0; overflow: hidden; margin: 0; }
+</style>
+"""
+st.markdown(THEME_CSS, unsafe_allow_html=True)
 
-nltk.data.path.append(nltk_data_dir)
-nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)
 
-stop_words = set(stopwords.words('english'))
+# -----------------------------
+#  ASSETS KAG NLP HELPERS AREA
+# -----------------------------
+@st.cache_resource
+def load_stopwords():
+    nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
+    os.makedirs(nltk_data_dir, exist_ok=True)
+    nltk.data.path.append(nltk_data_dir)
+    nltk.download("stopwords", download_dir=nltk_data_dir, quiet=True)
+    return set(stopwords.words("english"))
+
 
 @st.cache_resource
 def load_assets():
@@ -311,436 +254,564 @@ def load_assets():
     vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
     return model, vectorizer
 
+
+stop_words = load_stopwords()
+
 try:
     model, vectorizer = load_assets()
     assets_loaded = True
 except Exception:
     assets_loaded = False
 
-def clean_input_text(text):
+
+def clean_input_text(text: str) -> str:
     text = text.lower()
-    text = re.sub(r'<[^>]+>', ' ', text)
-    text = re.sub(r'[^a-zA-Z\s]', ' ', text)
-    tokens = text.split()
-    tokens = [word for word in tokens if word not in stop_words and len(word) > 2]
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"[^a-zA-Z\s]", " ", text)
+    tokens = [w for w in text.split() if w not in stop_words and len(w) > 2]
     return " ".join(tokens)
 
-def extract_matched_skills(cleaned_text, vectorizer, max_skills=25):
+
+def extract_matched_skills(cleaned_text: str, vectorizer, max_skills=25):
     vocab = vectorizer.vocabulary_
     words = cleaned_text.split()
-    matched = set()
-    
-    for word in words:
-        if word in vocab:
-            matched.add(word)
-            
+    matched = {w for w in words if w in vocab}
     for i in range(len(words) - 1):
-        bigram = f"{words[i]} {words[i+1]}"
+        bigram = f"{words[i]} {words[i + 1]}"
         if bigram in vocab:
             matched.add(bigram)
-            
-    return sorted(list(matched))[:max_skills]
+    return sorted(matched)[:max_skills]
 
-def softmax(x):
+
+def softmax(x: np.ndarray) -> np.ndarray:
     e_x = np.exp(x - np.max(x))
     return e_x / e_x.sum(axis=0)
 
-SAMPLE_DESCRIPTIONS = {
-    "-- Select an Interactive Sample --": "",
-    "Data Scientist": "We are seeking a Senior Data Scientist with strong Python, SQL, and Machine Learning experience. Must be proficient in pandas, scikit-learn, PyTorch, neural networks, deep learning, feature engineering, and interactive data visualization using Tableau or PowerBI.",
-    "DevOps Engineer": "Looking for a Cloud DevOps Engineer experienced in AWS, Docker, Kubernetes, Terraform, Jenkins, CI/CD automated pipelines, bash scripting, and Linux system administration. Experience with Ansible and Prometheus is a plus.",
-    "Full Stack Web Developer": "Hiring a Full Stack Web Developer skilled in JavaScript, TypeScript, React.js, Node.js, Express, HTML5, CSS3, RESTful APIs, GraphQL, and MongoDB database design. AWS experience preferred.",
-    "Cybersecurity Analyst": "Seeking a Cybersecurity Analyst to monitor security posture, conduct vulnerability assessments, analyze malware, configure firewalls, manage SIEM tools, and enforce compliance frameworks like ISO27001."
+
+def run_analysis(text: str) -> dict:
+    cleaned = clean_input_text(text)
+    vec = vectorizer.transform([cleaned])
+    role = model.predict(vec)[0]
+    scores = model.decision_function(vec)[0]
+    probs = softmax(scores)
+    top = scores.argsort()[-5:][::-1]
+    rankings = [
+        {
+            "role": str(model.classes_[i]),
+            "score": float(scores[i]),
+            "prob": float(probs[i] * 100),
+        }
+        for i in top
+    ]
+    return {
+        "role": str(role),
+        "confidence": rankings[0]["score"],
+        "rankings": rankings,
+        "skills": extract_matched_skills(cleaned, vectorizer, max_skills=25),
+        "raw": text,
+        "cleaned": cleaned,
+    }
+
+
+def build_report(a: dict) -> str:
+    rep = (
+        "=================================================\n"
+        "          SKILLMAX AI ANALYSIS REPORT           \n"
+        "=================================================\n\n"
+        f"Predicted Primary Category : {a['role']}\n"
+        f"Top Score Index            : {a['confidence']:.2f}\n\n"
+        "-------------------------------------------------\n"
+        "IDENTIFIED TECHNICAL SKILLS:\n"
+        "-------------------------------------------------\n"
+        f"{', '.join(a['skills']) if a['skills'] else 'None identified'}\n\n"
+        "-------------------------------------------------\n"
+        "RANKED CANDIDATE CATEGORIES:\n"
+        "-------------------------------------------------\n"
+    )
+    rep += "\n".join(
+        f"- {r['role']:<28} | Score: {r['score']:.2f} | Approx Fit: {r['prob']:.1f}%"
+        for r in a["rankings"]
+    )
+    return rep
+
+
+def build_chart(rankings: list) -> go.Figure:
+    ordered = list(reversed(rankings))  # Highest score ends up on top
+    fig = go.Figure(
+        go.Bar(
+            x=[r["score"] for r in ordered],
+            y=[r["role"] for r in ordered],
+            orientation="h",
+            marker=dict(
+                color="rgba(139,92,246,0.75)",
+                line=dict(color="#A855F7", width=1.5),
+            ),
+            hovertemplate="%{y}<br>Decision Score: %{x:.2f}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="Plus Jakarta Sans, sans-serif", color="#F8FAFC"),
+        height=360,
+        margin=dict(l=10, r=10, t=10, b=35),
+        showlegend=False,
+        xaxis=dict(
+            gridcolor="rgba(168,85,247,0.1)",
+            zeroline=False,
+            tickfont=dict(color="#94A3B8"),
+        ),
+        yaxis=dict(
+            showgrid=False,
+            automargin=True,
+            tickfont=dict(color="#F8FAFC", size=12),
+        ),
+        hoverlabel=dict(bgcolor="#0f172a", font=dict(color="#F8FAFC")),
+    )
+    try:  # Rounded bars require Plotly >= 6
+        fig.update_traces(marker_cornerradius=20)
+    except Exception:
+        pass
+    return fig
+
+
+# -------------------------------
+#  SAMPLE JOB KAG CALLBACKS AREA
+# -------------------------------
+SAMPLES = {
+    "Data Scientist": (
+        "We are seeking a Senior Data Scientist with strong Python, SQL, and Machine Learning "
+        "experience. Must be proficient in pandas, scikit-learn, PyTorch, neural networks, "
+        "deep learning, feature engineering, and interactive data visualization using Tableau or PowerBI."
+    ),
+    "DevOps Engineer": (
+        "Looking for a Cloud DevOps Engineer experienced in AWS, Docker, Kubernetes, Terraform, "
+        "Jenkins, CI/CD automated pipelines, bash scripting, and Linux system administration. "
+        "Experience with Ansible and Prometheus is a plus."
+    ),
+    "Full Stack Web Developer": (
+        "Hiring a Full Stack Web Developer skilled in JavaScript, TypeScript, React.js, Node.js, "
+        "Express, HTML5, CSS3, RESTful APIs, GraphQL, and MongoDB database design. "
+        "AWS experience preferred."
+    ),
+    "Cybersecurity Analyst": (
+        "Seeking a Cybersecurity Analyst to monitor security posture, conduct vulnerability "
+        "assessments, analyze malware, configure firewalls, manage SIEM tools, and enforce "
+        "compliance frameworks like ISO27001."
+    ),
+}
+SAMPLE_OPTIONS = [""] + list(SAMPLES.keys())
+SAMPLE_LABELS = {
+    "": "-- Choose Job Posting --",
+    "Full Stack Web Developer": "Full Stack Developer",
 }
 
-LOGO_PATH = "assets/unor_logo.png"
+TABS = [
+    ("input", "Job Input & Analysis", ":material/search:"),
+    ("analytics", "Classification Analytics", ":material/bar_chart:"),
+    ("skills", "Skill Breakdown", ":material/build:"),
+    ("debug", "NLP Debug", ":material/code:"),
+]
 
-# Initialize Session State
-if "input_text" not in st.session_state:
-    st.session_state["input_text"] = ""
+st.session_state.setdefault("active_tab", "input")
+st.session_state.setdefault("job_text", "")
+st.session_state.setdefault("analysis", None)
+st.session_state.setdefault("sample_choice", "")
 
-if "analyzed" not in st.session_state:
-    st.session_state["analyzed"] = False
 
-# Callbacks
+def set_tab(tab_id: str):
+    st.session_state["active_tab"] = tab_id
+
+
+def _load_sample(key: str):
+    st.session_state["job_text"] = SAMPLES[key]
+    st.session_state["input_widget"] = SAMPLES[key]
+    st.session_state["active_tab"] = "input"
+
+
 def on_sample_select():
-    selected = st.session_state["sample_choice"]
-    if selected != "-- Select an Interactive Sample --":
-        st.session_state["input_text"] = SAMPLE_DESCRIPTIONS[selected]
-    st.session_state["analyzed"] = False
+    key = st.session_state["sample_choice"]
+    if key in SAMPLES:
+        _load_sample(key)
 
-def reset_workspace_callback():
-    st.session_state["input_text"] = ""
-    st.session_state["analyzed"] = False
-    st.session_state["sample_choice"] = "-- Select an Interactive Sample --"
 
-# -----------------------------------------------------------------------------
-# 3. Sidebar UI Configuration
-# -----------------------------------------------------------------------------
-with st.sidebar:
-    if os.path.exists(LOGO_PATH):
-        st.image(LOGO_PATH, use_container_width=True)
-    else:
-        st.markdown("<h3 style='color:#C084FC;'>🏛 UNO - Recoletos</h3>", unsafe_allow_html=True)
-        st.caption("📍 *Place logo in assets/unor_logo.png*")
+def reset_workspace():
+    st.session_state["job_text"] = ""
+    st.session_state["input_widget"] = ""
+    st.session_state["sample_choice"] = ""
+    st.session_state["analysis"] = None
 
-    st.markdown("---")
-    st.markdown("<h4 style='color:#F8FAFC;'>⚡ SkillMax AI</h4>", unsafe_allow_html=True)
-    st.write(
-        "Automated IT job posting classification & skill extraction powered by "
-        "Natural Language Processing (NLP)."
-    )
 
-    st.markdown("---")
-    st.markdown("### 🧪 Quick Load Templates")
-    st.selectbox(
-        "Choose a pre-filled job posting:",
-        list(SAMPLE_DESCRIPTIONS.keys()),
-        key="sample_choice",
-        on_change=on_sample_select
-    )
+# --------------------------------------
+#  TOP NAVIGATION KAG HERO SECTION AREA
+# --------------------------------------
+md("""
+<div class="sm-nav"><div class="sm-nav-inner">
+  <div class="sm-brand">
+    <div class="sm-logo"><i class="fa-solid fa-bolt"></i></div>
+    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos College of IT</span></div>
+  </div>
+  <div class="sm-links">
+    <a href="#overview" data-scroll="overview">DATA SCIENCE PROJECT 2026</a>
+  </div>
+  <div class="sm-right">
+    <span class="sm-status"><span class="sm-dot"></span>LinearSVC + TF-IDF Active</span>
+  </div>
+</div></div>
+""")
 
-    st.markdown("---")
-    st.markdown("### 📋 Project Metadata")
-    st.markdown("""
-    - **Institution:** UNO - Recoletos
-    - **Department:** College of IT
-    - **Classifier:** Linear SVC
-    - **Vectorization:** TF-IDF (Unigram + Bigram)
-    - **Scope:** 25 IT Categories
+with st.container(key="hero"):
+    md("""
+    <div id="overview" class="anchor-target"></div>
+    <div class="sm-hero">
+      <div class="sm-badge"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Next-Gen NLP Job Intelligence Platform</span></div>
+      <div class="sm-title">Real-Time Job Analytics.<br/><span class="grad">Instant Skill Discovery.</span></div>
+      <div class="sm-desc">Categorize unstructured IT job listings across 25 target technical roles and extract candidate skills in milliseconds using Machine Learning.</div>
+    </div>
     """)
-    st.markdown("---")
-    st.caption("Developed by **Group DATA-MAX**")
 
-# -----------------------------------------------------------------------------
-# 4. Top Navigation Bar (Matching Preview Header)
-# -----------------------------------------------------------------------------
-st.markdown("""
-    <div class="top-nav-bar">
-        <div class="brand-logo">
-            <div class="brand-icon">⚡</div>
-            <div>
-                <div class="brand-title">SkillMax AI</div>
-                <div class="brand-sub">UNO - Recoletos College of IT</div>
-            </div>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <span style="font-size: 0.75rem; font-weight: 700; color: #38BDF8; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 4px 14px; border-radius: 20px;">
-                🟢 LinearSVC + TF-IDF Active
-            </span>
-        </div>
-    </div>
-""", unsafe_allow_html=True)
+# Animated globe + smooth-scroll helper
+components.html(
+    """
+<script>
+(function () {
+  var P, doc;
+  try { P = window.parent; doc = P.document; } catch (e) { return; }
+  var token = {}; P.__skmToken = token;
 
-# -----------------------------------------------------------------------------
-# 5. Centered Hero Section (Without Action Buttons)
-# -----------------------------------------------------------------------------
-st.markdown("""
-    <div class="hero-center">
-        <span class="hero-badge-pill">✨ Next-Gen NLP Job Intelligence Platform</span>
-        <h1 class="hero-title-main">
-            Real-Time Job Analytics. <br/>
-            <span class="hero-gradient-text">Instant Skill Discovery.</span>
-        </h1>
-        <p class="hero-desc">
-            Categorize unstructured IT job listings across 25 target technical roles and extract candidate skills in milliseconds using Machine Learning.
-        </p>
-    </div>
-""", unsafe_allow_html=True)
+  if (P.__skmClick) doc.removeEventListener('click', P.__skmClick, true);
+  P.__skmClick = function (e) {
+    var a = e.target && e.target.closest ? e.target.closest('a[data-scroll]') : null;
+    if (!a) return;
+    e.preventDefault();
+    var id = a.getAttribute('data-scroll');
+    var t = doc.getElementById(id) || doc.getElementById('user-content-' + id);
+    if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  doc.addEventListener('click', P.__skmClick, true);
 
-# Ambient Canvas Mesh Sphere
-components.html("""
-    <canvas id="globeCanvas" style="width: 100%; height: 160px;"></canvas>
-    <script>
-        const canvas = document.getElementById('globeCanvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth;
-        canvas.height = 160;
+  var W = 800, H = 400, N = 180, R = 160, dots = [];
+  for (var i = 0; i < N; i++) {
+    var th = Math.acos(2 * Math.random() - 1), ph = 2 * Math.PI * Math.random();
+    dots.push({ x: R * Math.sin(th) * Math.cos(ph), y: R * Math.sin(th) * Math.sin(ph), z: R * Math.cos(th) });
+  }
+  var canvas = null, ctx = null, ang = 0.002;
 
-        let dots = [];
-        const dotCount = 180;
-        const radius = 65;
+  function ensure() {
+    var hero = doc.querySelector('.st-key-hero');
+    if (!hero) return false;
+    if (!canvas || !canvas.isConnected || canvas.parentNode !== hero) {
+      var old = hero.querySelector('canvas.sm-globe'); if (old) old.remove();
+      canvas = doc.createElement('canvas');
+      canvas.className = 'sm-globe'; canvas.width = W; canvas.height = H;
+      hero.insertBefore(canvas, hero.firstChild);
+      ctx = canvas.getContext('2d');
+    }
+    return true;
+  }
 
-        for (let i = 0; i < dotCount; i++) {
-            let theta = Math.acos(2 * Math.random() - 1);
-            let phi = 2 * Math.PI * Math.random();
-            dots.push({
-                x: radius * Math.sin(theta) * Math.cos(phi),
-                y: radius * Math.sin(theta) * Math.sin(phi),
-                z: radius * Math.cos(theta)
-            });
+  function frame() {
+    if (P.__skmToken !== token) return;
+    if (ensure()) {
+      ctx.clearRect(0, 0, W, H);
+      var cx = W / 2, cy = H / 2 + 30;
+      ctx.fillStyle = 'rgba(168, 85, 247, 0.6)';
+      for (var i = 0; i < dots.length; i++) {
+        var d = dots[i];
+        var x1 = d.x * Math.cos(ang) - d.z * Math.sin(ang);
+        var z1 = d.z * Math.cos(ang) + d.x * Math.sin(ang);
+        d.x = x1; d.z = z1;
+        var s = 300 / (300 + d.z);
+        if (d.z > -100) {
+          ctx.beginPath();
+          ctx.arc(d.x * s + cx, d.y * s + cy, 1.8 * s, 0, Math.PI * 2);
+          ctx.fill();
         }
-
-        let angleY = 0.008;
-
-        function render() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let cx = canvas.width / 2;
-            let cy = canvas.height / 2;
-
-            for (let i = 0; i < dots.length; i++) {
-                let d = dots[i];
-                let x1 = d.x * Math.cos(angleY) - d.z * Math.sin(angleY);
-                let z1 = d.z * Math.cos(angleY) + d.x * Math.sin(angleY);
-                d.x = x1;
-                d.z = z1;
-
-                let scale = 200 / (200 + d.z);
-                let px = d.x * scale + cx;
-                let py = d.y * scale + cy;
-
-                if (d.z > -50) {
-                    ctx.beginPath();
-                    ctx.arc(px, py, 1.5 * scale, 0, Math.PI * 2);
-                    ctx.fillStyle = d.z > 20 ? 'rgba(56, 189, 248, 0.8)' : 'rgba(168, 85, 247, 0.45)';
-                    ctx.fill();
-                }
-            }
-            requestAnimationFrame(render);
-        }
-        render();
-    </script>
-""", height=165)
+      }
+    }
+    P.requestAnimationFrame(frame);
+  }
+  frame();
+})();
+</script>
+""",
+    height=0,
+)
 
 if not assets_loaded:
-    st.error("⚠️ **Model files missing!** Please check that `models/skillmax_model.pkl` and `models/tfidf_vectorizer.pkl` exist.")
+    st.error(
+        "⚠️ **Model files missing!** Please check that `models/skillmax_model.pkl` and "
+        "`models/tfidf_vectorizer.pkl` exist."
+    )
     st.stop()
 
-# -----------------------------------------------------------------------------
-# 6. Interactive Workspace Tabs
-# -----------------------------------------------------------------------------
-tab_input, tab_analytics, tab_skills, tab_debug = st.tabs([
-    "🔍 Job Input & Analysis", 
-    "📊 Classification Analytics", 
-    "🛠️ Skill Breakdown", 
-    "⚙ NLP Debug"
-])
+# ----------------------------------------
+#  TAB BAR KAG QUICK SAMPLE SELECTOR AREA
+# ----------------------------------------
+md('<div id="analyzer" class="anchor-target"></div>')
 
-# -----------------------------------------------------------------------------
-# TAB 1: Job Input & Analysis (Matching Preview Layout)
-# -----------------------------------------------------------------------------
-with tab_input:
-    col_main, col_stats = st.columns([2.3, 1])
+bar_col, sel_col = st.columns([3.4, 1.5], vertical_alignment="center")
 
-    with col_main:
-        st.markdown("#### 📝 **Paste Job Posting Text**")
-        
-        btn_col1, _, _ = st.columns([1, 1, 3])
-        with btn_col1:
-            st.button(
-                "🔄 Reset", 
-                use_container_width=True, 
-                type="secondary", 
-                on_click=reset_workspace_callback
-            )
-        
-        job_description = st.text_area(
-            label="Job Posting Text",
-            key="input_text",
-            placeholder="Paste full IT job posting text here (including duties, qualifications, and stack requirements)...",
-            height=280,
-            label_visibility="collapsed"
+with bar_col:
+    with st.container(key="tabbar"):
+        tab_cols = st.columns([1.2, 1.3, 0.95, 0.75])
+        for col, (tab_id, label, icon) in zip(tab_cols, TABS):
+            with col:
+                st.button(
+                    label,
+                    key=f"tab_{tab_id}",
+                    icon=icon,
+                    type=(
+                        "primary"
+                        if st.session_state["active_tab"] == tab_id
+                        else "secondary"
+                    ),
+                    on_click=set_tab,
+                    args=(tab_id,),
+                )
+
+with sel_col:
+    lbl_col, drop_col = st.columns([1, 1.7], vertical_alignment="center")
+    with lbl_col:
+        md('<div class="sm-qs-label">Quick Sample:</div>')
+    with drop_col:
+        st.selectbox(
+            "Quick sample",
+            SAMPLE_OPTIONS,
+            key="sample_choice",
+            format_func=lambda k: SAMPLE_LABELS.get(k, k),
+            on_change=on_sample_select,
+            label_visibility="collapsed",
         )
 
-        analyze_btn = st.button("🚀 Analyze Job Posting", type="primary", use_container_width=True)
+active = st.session_state["active_tab"]
 
-    with col_stats:
-        st.markdown("#### 📊 **TEXT METRICS**")
-        
-        word_count = len(job_description.split()) if job_description.strip() else 0
-        char_count = len(job_description) if job_description.strip() else 0
+# -------------------------------
+#  JOB INPUT & ANALYSIS TAB AREA
+# -------------------------------
+if active == "input":
+    left, right = st.columns([2, 1], gap="medium")
 
-        st.markdown(f"""
-            <div class="glass-card">
-                <div class="stat-box" style="margin-bottom: 12px;">
-                    <div class="stat-number">{word_count}</div>
-                    <div class="stat-label">WORD COUNT</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-number">{char_count}</div>
-                    <div class="stat-label">CHARACTERS</div>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+    with left:
+        with st.container(key="panel_input"):
+            head_col, reset_col = st.columns([5, 1], vertical_alignment="center")
+            with head_col:
+                md(
+                    '<div class="sm-h3"><i class="fa-regular fa-file-lines"'
+                    ' style="color:#38BDF8"></i>Paste Job Posting Text</div>'
+                )
+            with reset_col:
+                st.button(
+                    "Reset",
+                    key="btn_reset",
+                    icon=":material/restart_alt:",
+                    on_click=reset_workspace,
+                )
 
-        st.markdown("""
-            <div class="glass-card" style="padding: 18px;">
-                <h5 style="color:#C084FC; font-size:0.8rem; font-weight:700; margin-bottom:8px;">🎯 SYSTEM CONTEXT</h5>
-                <div style="font-size:0.75rem; color:#94A3B8; display:flex; justify-content:space-between; margin-bottom:4px;">
-                    <span>Institution:</span> <strong style="color:#F8FAFC;">UNO - Recoletos</strong>
-                </div>
-                <div style="font-size:0.75rem; color:#94A3B8; display:flex; justify-content:space-between;">
-                    <span>Classifier:</span> <strong style="color:#38BDF8;">Linear SVC</strong>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
+            if "input_widget" not in st.session_state:
+                st.session_state["input_widget"] = st.session_state["job_text"]
 
-# -----------------------------------------------------------------------------
-# Result Processing Logic
-# -----------------------------------------------------------------------------
-if analyze_btn:
-    if not job_description.strip():
-        st.warning("⚠️ Please paste a valid job description before clicking analyze.")
-        st.session_state["analyzed"] = False
-    else:
-        st.session_state["analyzed"] = True
-
-if st.session_state.get("analyzed") and job_description.strip():
-    with st.spinner("Executing NLP pre-processing & ML inference..."):
-        cleaned_text = clean_input_text(job_description)
-        text_vector = vectorizer.transform([cleaned_text])
-        
-        predicted_role = model.predict(text_vector)[0]
-        decision_scores = model.decision_function(text_vector)[0]
-        classes = model.classes_
-        
-        probabilities = softmax(decision_scores)
-        top_indices = decision_scores.argsort()[-5:][::-1]
-        
-        top_matches = [
-            {
-                "Role": classes[i],
-                "Score": float(decision_scores[i]),
-                "Probability": float(probabilities[i] * 100)
-            } 
-            for i in top_indices
-        ]
-        
-        unique_skills = extract_matched_skills(cleaned_text, vectorizer, max_skills=25)
-
-    with tab_input:
-        st.markdown("---")
-        st.markdown(f"""
-            <div class="glass-card">
-                <span class="prediction-badge">Primary Predicted Category</span>
-                <div class="predicted-role-title">👨‍💻 {predicted_role}</div>
-                <p style="color: #94A3B8; margin-bottom: 0;">
-                    Top Score Index: <strong style="color: #38BDF8;">{top_matches[0]['Score']:.2f}</strong> | 
-                    Identified Skill Tokens: <strong style="color: #C084FC;">{len(unique_skills)} phrases</strong>
-                </p>
-            </div>
-        """, unsafe_allow_html=True)
-
-    # -----------------------------------------------------------------------------
-    # TAB 2: Classification Analytics
-    # -----------------------------------------------------------------------------
-    with tab_analytics:
-        st.markdown("### 🎯 **Model Category Confidence Breakdown**")
-        
-        c1, c2 = st.columns([1.5, 1])
-        
-        with c1:
-            df_top = pd.DataFrame(top_matches).sort_values(by="Score", ascending=True)
-            
-            fig = px.bar(
-                df_top,
-                x="Score",
-                y="Role",
-                orientation='h',
-                text_auto='.2f',
-                title="Top Candidate Category Decision Scores",
-                color="Score",
-                color_continuous_scale=["#6D28D9", "#8B5CF6", "#38BDF8", "#E9D5FF"]
+            job_text = st.text_area(
+                "Job Posting Text",
+                key="input_widget",
+                height=240,
+                placeholder=(
+                    "Paste full IT job posting text here (including duties, qualifications, "
+                    "and technology stack requirements)..."
+                ),
+                label_visibility="collapsed",
             )
-            
-            fig.update_layout(
-                paper_bgcolor="rgba(0,0,0,0)",
-                plot_bgcolor="rgba(0,0,0,0)",
-                font=dict(color="#F8FAFC", family="Plus Jakarta Sans"),
-                xaxis=dict(showgrid=True, gridcolor="rgba(168, 85, 247, 0.15)"),
-                yaxis=dict(showgrid=False),
-                coloraxis_showscale=False,
-                height=380,
-                margin=dict(l=20, r=20, t=50, b=20)
-            )
-            
-            fig.update_traces(
-                marker_line_color='rgba(255,255,255,0.2)',
-                marker_line_width=1,
-                opacity=0.95
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-
-        with c2:
-            st.markdown("#### 📈 **Ranked Candidate Scores**")
-            display_df = pd.DataFrame(top_matches)[["Role", "Score", "Probability"]]
-            display_df["Probability"] = display_df["Probability"].apply(lambda x: f"{x:.1f}%")
-            display_df["Score"] = display_df["Score"].apply(lambda x: f"{x:.2f}")
-            
-            st.dataframe(
-                display_df,
-                column_config={
-                    "Role": "Job Category",
-                    "Score": "Decision Score",
-                    "Probability": "Approx Fit %"
-                },
-                use_container_width=True,
-                hide_index=True
+            st.session_state["job_text"] = job_text
+            analyze_clicked = st.button(
+                "Analyze Job Posting", key="btn_analyze", icon=":material/bolt:"
             )
 
-    # -----------------------------------------------------------------------------
-    # TAB 3: Extracted Technical Skills
-    # -----------------------------------------------------------------------------
-    with tab_skills:
-        st.markdown("### 🛠️ **Identified Technical Stack Tokens**")
-        
-        if unique_skills:
-            skills_html = "".join([f'<span class="skill-pill">⚡ {skill}</span>' for skill in unique_skills])
-            st.markdown(f'<div style="margin-bottom: 25px;">{skills_html}</div>', unsafe_allow_html=True)
-            
-            st.markdown("#### 🔍 **Skill Keyword Frequency Search**")
-            skill_counts = [{"Skill Keyword": skill, "Occurrences": cleaned_text.split().count(skill)} for skill in unique_skills]
-            df_skills = pd.DataFrame(skill_counts).sort_values(by="Occurrences", ascending=False)
-            
-            st.dataframe(df_skills, use_container_width=True, hide_index=True)
+    with right:
+        stripped = job_text.strip()
+        words = len(stripped.split()) if stripped else 0
+        chars = len(stripped)
+
+        md(f"""
+        <div class="glass-panel">
+          <div class="sm-h3s"><i class="fa-solid fa-chart-simple"></i>Text Metrics</div>
+          <div class="sm-stat-grid">
+            <div class="sm-stat"><span class="sm-stat-n">{words}</span><span class="sm-stat-l">Word Count</span></div>
+            <div class="sm-stat"><span class="sm-stat-n">{chars}</span><span class="sm-stat-l">Characters</span></div>
+          </div>
+        </div>
+        """)
+        md("""
+        <div class="glass-panel">
+          <div class="sm-h3s" style="margin-bottom:12px"><i class="fa-solid fa-circle-info"></i>System Context</div>
+          <div class="sm-ctx-row"><span class="sm-ctx-k">Institution:</span><span class="sm-ctx-v">UNO - Recoletos</span></div>
+          <div class="sm-ctx-row"><span class="sm-ctx-k">Classifier:</span><span class="sm-ctx-v" style="color:#38BDF8">Linear SVC</span></div>
+          <div class="sm-ctx-row"><span class="sm-ctx-k">Vectorization:</span><span class="sm-ctx-v">TF-IDF (Unigram + Bigram)</span></div>
+          <div class="sm-ctx-row"><span class="sm-ctx-k">Coverage Scope:</span><span class="sm-ctx-v" style="color:#34d399">25 IT Job Categories</span></div>
+        </div>
+        """)
+
+    if analyze_clicked:
+        if not job_text.strip():
+            st.warning("Please paste or select a job description text to analyze.")
         else:
-            st.info("No specific technical terms identified.")
+            with st.spinner("Executing NLP pre-processing & ML inference..."):
+                st.session_state["analysis"] = run_analysis(job_text.strip())
 
-        st.markdown("---")
-        st.markdown("### 📥 **Download Analysis Report**")
-        
-        report_text = (
-            f"=================================================\n"
-            f"           SKILLMAX AI ANALYSIS REPORT           \n"
-            f"=================================================\n\n"
-            f"Primary Role Prediction: {predicted_role}\n"
-            f"Top Score Index        : {top_matches[0]['Score']:.2f}\n"
-            f"Word Count             : {word_count}\n"
-            f"Extracted Skill Count  : {len(unique_skills)}\n\n"
-            f"-------------------------------------------------\n"
-            f"IDENTIFIED TECHNICAL SKILLS:\n"
-            f"-------------------------------------------------\n"
-            f"{', '.join(unique_skills) if unique_skills else 'None identified'}\n\n"
-            f"-------------------------------------------------\n"
-            f"RANKED CANDIDATE CATEGORIES:\n"
-            f"-------------------------------------------------\n"
-        )
-        for m in top_matches:
-            report_text += f"- {m['Role']:<28} | Score: {m['Score']:.2f} | Approx Fit: {m['Probability']:.1f}%\n"
+    analysis = st.session_state["analysis"]
+    if analysis:
+        with st.container(key="panel_banner"):
+            b_text, b_chart, b_skills = st.columns(
+                [5, 1.25, 1.25], vertical_alignment="center"
+            )
+            with b_text:
+                md(f"""
+                <div>
+                  <span class="sm-pill">Primary Predicted Category</span>
+                  <div class="sm-role">👨‍💻 <span>{_html.escape(analysis['role'])}</span></div>
+                  <div class="sm-meta">Top Score Index: <strong style="color:#d8b4fe">{analysis['confidence']:.2f}</strong>
+                  | Extracted Skill Tokens: <strong style="color:#38BDF8">{len(analysis['skills'])} phrases</strong></div>
+                </div>
+                """)
+            with b_chart:
+                st.button(
+                    "View Full Chart",
+                    key="btn_chart",
+                    on_click=set_tab,
+                    args=("analytics",),
+                )
+            with b_skills:
+                st.button(
+                    "Explore Skills",
+                    key="btn_skills",
+                    on_click=set_tab,
+                    args=("skills",),
+                )
 
-        st.download_button(
-            label="📥 Download Analysis (.txt)",
-            data=report_text,
-            file_name=f"skillmax_{predicted_role.lower().replace(' ', '_')}_analysis.txt",
-            mime="text/plain",
-            use_container_width=True,
-            type="primary"
-        )
+# -----------------------------------
+#  CLASSIFICATION ANALYTICS TAB AREA
+# -----------------------------------
+elif active == "analytics":
+    analysis = st.session_state["analysis"]
+    left, right = st.columns([2, 1], gap="medium")
 
-    # -----------------------------------------------------------------------------
-    # TAB 4: NLP Preprocessing Debug Pipeline
-    # -----------------------------------------------------------------------------
-    with tab_debug:
-        st.markdown("### ⚙️ **NLP Normalization & Debug Log**")
-        
-        d_col1, d_col2 = st.columns(2)
-        with d_col1:
-            st.markdown("**Raw Input Text Snippet:**")
-            st.info(job_description[:500] + ("..." if len(job_description) > 500 else ""))
-        with d_col2:
-            st.markdown("**Cleaned & Tokenized Stream:**")
-            st.success(cleaned_text[:500] + ("..." if len(cleaned_text) > 500 else ""))
-        
-        with st.expander("🔍 View Complete Cleaned Log"):
-            st.text_area("Cleaned Text Output", cleaned_text, height=180, disabled=True)
+    with left:
+        with st.container(key="panel_chart"):
+            md("""
+            <div>
+              <div class="sm-h3"><i class="fa-solid fa-chart-column" style="color:#8B5CF6"></i>Model Category Confidence Breakdown</div>
+              <div class="sm-sub">Top decision scores computed across candidate role vectors.</div>
+            </div>
+            """)
+            if analysis:
+                st.plotly_chart(
+                    build_chart(analysis["rankings"]),
+                    theme=None,
+                    config={"displayModeBar": False},
+                )
+            else:
+                md('<div class="sm-chart-empty">Run an analysis to view the confidence chart.</div>')
+
+    with right:
+        if analysis:
+            rows = "".join(
+                f'<tr><td class="role">{_html.escape(r["role"])}</td>'
+                f'<td class="r score">{r["score"]:.2f}</td>'
+                f'<td class="r fit">{r["prob"]:.1f}%</td></tr>'
+                for r in analysis["rankings"]
+            )
+        else:
+            rows = '<tr><td colspan="3" style="text-align:center;color:#64748b">Run an analysis to view candidate rankings.</td></tr>'
+
+        md(f"""
+        <div class="glass-panel">
+          <div class="sm-h3s"><i class="fa-solid fa-table-list"></i>Ranked Candidate Scores</div>
+          <div style="overflow-x:auto">
+            <table class="sm-table">
+              <thead><tr><th>Job Category</th><th class="r">Score</th><th class="r">Fit %</th></tr></thead>
+              <tbody>{rows}</tbody>
+            </table>
+          </div>
+          <div class="sm-table-foot">Calibrated Softmax Probability &amp; Linear Decision Functions</div>
+        </div>
+        """)
+
+# -----------------------------------------
+#  SKILL BREAKDOWN & EXPORT SKILL TAB AREA
+# -----------------------------------------
+elif active == "skills":
+    analysis = st.session_state["analysis"]
+    with st.container(key="panel_skills"):
+        t_col, d_col = st.columns([3, 1.3], vertical_alignment="center")
+        with t_col:
+            md("""
+            <div>
+              <div class="sm-h3"><i class="fa-solid fa-tags" style="color:#38BDF8"></i>Identified Technical Stack Tokens</div>
+              <div class="sm-sub">Extracted vocabulary keywords and bi-gram technology phrases matched against TF-IDF index.</div>
+            </div>
+            """)
+        with d_col:
+            file_name = (
+                f"skillmax_{analysis['role'].lower().replace(' ', '_')}_analysis.txt"
+                if analysis
+                else "skillmax_analysis.txt"
+            )
+            st.download_button(
+                "Download Analysis (.txt)",
+                data=build_report(analysis) if analysis else "",
+                file_name=file_name,
+                mime="text/plain",
+                key="btn_download",
+                icon=":material/download:",
+                disabled=analysis is None,
+            )
+
+        if analysis and analysis["skills"]:
+            pills = "".join(
+                f'<span class="skill-badge"><i class="fa-solid fa-bolt"></i>{_html.escape(s)}</span>'
+                for s in analysis["skills"]
+            )
+        elif analysis:
+            pills = '<span class="sm-empty">No specific technical terms identified.</span>'
+        else:
+            pills = '<span class="sm-empty">No skills extracted yet. Paste a job description and click Analyze.</span>'
+
+        md(f'<div class="sm-skillbox">{pills}</div>')
+
+# --------------------
+#  NLP DEBUG TAB AREA
+# --------------------
+elif active == "debug":
+    analysis = st.session_state["analysis"]
+    raw = _html.escape(analysis["raw"]) if analysis else "No text loaded."
+    cleaned = (
+        _html.escape(analysis["cleaned"])
+        if analysis and analysis["cleaned"]
+        else "No tokens generated."
+    )
+
+    md(f"""
+    <div class="glass-panel">
+      <div class="sm-h3"><i class="fa-solid fa-bug" style="color:#c084fc"></i>NLP Normalization &amp; Debug Log</div>
+      <div class="sm-sub">Tokenization, stopword removal, regex HTML cleaning, and lemmatization pipeline inspect.</div>
+      <div class="sm-debug-grid">
+        <div>
+          <span class="sm-debug-label" style="color:#d8b4fe">Raw Text Snippet</span>
+          <div class="sm-debug-box" style="border:1px solid rgba(168,85,247,.2);color:#94a3b8">{raw}</div>
+        </div>
+        <div>
+          <span class="sm-debug-label" style="color:#34d399">Cleaned &amp; Tokenized Stream</span>
+          <div class="sm-debug-box" style="border:1px solid rgba(16,185,129,.2);color:rgba(110,231,183,.8)">{cleaned}</div>
+        </div>
+      </div>
+    </div>
+    """)
+
+# ------------
+# FOOTER AREA
+# ------------
+md("""
+<div id="metadata" class="sm-footer anchor-target">
+  <div>⚡ SkillMax AI Assistant &bull; Developed by <strong>Group DATA-MAX</strong></div>
+  <div>College of Information Technology &bull; University of Negros Occidental - Recoletos</div>
+</div>
+""")
