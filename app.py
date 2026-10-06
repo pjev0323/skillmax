@@ -466,7 +466,7 @@ with st.container(key="hero"):
     <div class="sm-hero">
       <div class="sm-badge"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Next-Gen NLP Job Intelligence Platform</span></div>
       <div class="sm-title">Real-Time Job Analytics.<br/><span class="grad">Instant Skill Discovery.</span></div>
-      <div class="sm-desc">Categorize unstructured IT job listings across 25 target technical roles and extract candidate skills in milliseconds using Machine Learning.</div>
+      <div class="sm-desc">An AI-powered NLP platform using LinearSVC and TF-IDF feature extraction to automatically classify unstructured IT job postings across 25 target technical roles while extracting key technology stack tokens.</div>
     </div>
     """)
 
