@@ -466,7 +466,7 @@ with st.container(key="hero"):
     <div class="sm-hero">
       <div class="sm-badge"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Next-Gen NLP Job Intelligence Platform</span></div>
       <div class="sm-title">Real-Time Job Analytics.<br/><span class="grad">Instant Skill Discovery.</span></div>
-      <div class="sm-desc">A data science project engineered as an AI chat assistant, leveraging NLP and statistical classification models to evaluate unstructured job listings, map 25 IT career domains, and extract key technology stack requirements in real time.</div>
+      <div class="sm-desc">An AI assistant designed for our Data Science project that applies NLP algorithms to evaluate job listings, predict 25 distinct IT career categories, and extract relevant skill tokens in real time.</div>
     </div>
     """)
 
