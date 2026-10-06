@@ -82,8 +82,6 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
   font-weight: 600; background: rgba(139,92,246,.1); color: #38BDF8; border: 1px solid rgba(139,92,246,.3); }
 .sm-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; margin-right: 8px; animation: smPing 2s cubic-bezier(.4,0,.6,1) infinite; }
 @keyframes smPing { 50% { opacity: .5; } }
-@media (max-width: 900px) { .sm-links { display: none; } }
-@media (max-width: 640px) { .sm-status { display: none; } }
 
 /* ---- Hero ---- */
 .st-key-hero { position: relative; overflow: hidden; gap: 0 !important; padding: 80px 24px 64px;
@@ -102,7 +100,6 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .sm-title .grad { background: linear-gradient(to right,#d8b4fe,#38BDF8,#8B5CF6); -webkit-background-clip: text;
   background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 .sm-desc { max-width: 672px; margin: 0 auto 32px; font-size: 18px; line-height: 28px; font-weight: 500; color: #94a3b8; }
-@media (max-width: 768px) { .sm-title { font-size: 36px; } .sm-desc { font-size: 16px; line-height: 24px; } }
 
 /* ---- Buttons (shared) ---- */
 .stButton button, .stDownloadButton button { font-family: inherit !important; border-radius: 9999px !important;
@@ -189,7 +186,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 /* Results banner */
 .sm-pill { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 10px; line-height: 16px; font-weight: 800;
   text-transform: uppercase; letter-spacing: .1em; background: rgba(88,28,135,.6); color: #38BDF8; border: 1px solid rgba(168,85,247,.4); margin-bottom: 8px; }
-.sm-role { font-size: 30px; line-height: 36px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 12px; }
+.sm-role { font-size: 30px; line-height: 36px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 12px; word-break: break-word; }
 .sm-meta { font-size: 12px; line-height: 16px; color: #94a3b8; margin-top: 4px; }
 
 /* Ranking table */
@@ -219,7 +216,6 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 
 /* Debug */
 .sm-debug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
-@media (max-width: 768px) { .sm-debug-grid { grid-template-columns: 1fr; } }
 .sm-debug-label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
 .sm-debug-box { background: rgba(2,6,23,.8); padding: 16px; border-radius: 12px; font-size: 12px; font-family: ui-monospace, monospace;
   height: 192px; overflow-y: auto; line-height: 1.625; white-space: pre-wrap; word-break: break-word; }
@@ -231,6 +227,30 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 
 /* Zero-height JS helper iframe */
 [data-testid="stElementContainer"]:has(iframe[height="0"]) { position: absolute; width: 0; height: 0; overflow: hidden; margin: 0; }
+
+/* ---- Responsive Mobile & Tablet Rules ---- */
+@media (max-width: 900px) { 
+  .sm-links { display: none; } 
+}
+
+@media (max-width: 768px) {
+  .block-container { padding: 4.5rem 1rem 1.5rem !important; }
+  .st-key-hero { padding: 40px 12px 32px !important; }
+  .sm-title { font-size: 32px !important; line-height: 1.2 !important; }
+  .sm-desc { font-size: 14px !important; line-height: 22px !important; }
+  .sm-role { font-size: 22px !important; }
+  .sm-debug-grid { grid-template-columns: 1fr !important; }
+  .sm-qs-label { text-align: left !important; margin-bottom: 4px; }
+}
+
+@media (max-width: 640px) {
+  .sm-status { display: none; }
+  .st-key-tabbar [data-testid="stHorizontalBlock"] { flex-direction: column !important; gap: 6px !important; }
+  .st-key-tabbar { border-radius: 16px !important; }
+  .sm-stat-grid { grid-template-columns: 1fr !important; }
+  .sm-brand-name { font-size: 16px !important; }
+  .sm-brand-sub { font-size: 10px !important; }
+}
 </style>
 """
 st.markdown(THEME_CSS, unsafe_allow_html=True)
