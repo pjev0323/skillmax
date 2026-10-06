@@ -100,7 +100,7 @@ st.markdown("""
     .hero-center {
         text-align: center;
         max-width: 850px;
-        margin: 0 auto 15px auto;
+        margin: 0 auto 35px auto;
         padding: 10px 20px;
     }
 
@@ -136,7 +136,7 @@ st.markdown("""
         color: #94A3B8;
         font-size: 1.05rem;
         font-weight: 500;
-        margin-bottom: 10px;
+        margin-bottom: 24px;
         line-height: 1.6;
     }
 
@@ -374,6 +374,11 @@ def reset_workspace_callback():
     st.session_state["analyzed"] = False
     st.session_state["sample_choice"] = "-- Select an Interactive Sample --"
 
+def load_demo_posting_callback():
+    st.session_state["input_text"] = SAMPLE_DESCRIPTIONS["Data Scientist"]
+    st.session_state["sample_choice"] = "Data Scientist"
+    st.session_state["analyzed"] = False
+
 # -----------------------------------------------------------------------------
 # 3. Sidebar UI Configuration
 # -----------------------------------------------------------------------------
@@ -381,7 +386,7 @@ with st.sidebar:
     if os.path.exists(LOGO_PATH):
         st.image(LOGO_PATH, use_container_width=True)
     else:
-        st.markdown("<h3 style='color:#C084FC;'>🏛 UNO - Recoletos</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color:#C084FC;'>🏛️️ UNO - Recoletos</h3>", unsafe_allow_html=True)
         st.caption("📍 *Place logo in assets/unor_logo.png*")
 
     st.markdown("---")
@@ -433,7 +438,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 5. Centered Hero Section (Without Action Buttons)
+# 5. Centered Hero Section (Matching Preview Text & Buttons)
 # -----------------------------------------------------------------------------
 st.markdown("""
     <div class="hero-center">
@@ -447,6 +452,15 @@ st.markdown("""
         </p>
     </div>
 """, unsafe_allow_html=True)
+
+# Hero CTA Action Buttons
+cta_col1, cta_col2, cta_col3 = st.columns([1, 1, 1])
+with cta_col2:
+    btn_c1, btn_c2 = st.columns(2)
+    with btn_c1:
+        load_demo_btn = st.button("Load Demo Posting", type="secondary", use_container_width=True, on_click=load_demo_posting_callback)
+    with btn_c2:
+        st.markdown('<a href="#analyzer" style="text-decoration:none;"><button style="width:100%; background:linear-gradient(135deg, #8B5CF6, #38BDF8); color:white; border:none; padding:10px 18px; border-radius:30px; font-weight:700; cursor:pointer;">Try Analyzer →</button></a>', unsafe_allow_html=True)
 
 # Ambient Canvas Mesh Sphere
 components.html("""
@@ -506,6 +520,9 @@ if not assets_loaded:
     st.error("⚠️ **Model files missing!** Please check that `models/skillmax_model.pkl` and `models/tfidf_vectorizer.pkl` exist.")
     st.stop()
 
+# Anchor for smooth scrolling
+st.markdown("<div id='analyzer'></div>", unsafe_allow_html=True)
+
 # -----------------------------------------------------------------------------
 # 6. Interactive Workspace Tabs
 # -----------------------------------------------------------------------------
@@ -513,7 +530,7 @@ tab_input, tab_analytics, tab_skills, tab_debug = st.tabs([
     "🔍 Job Input & Analysis", 
     "📊 Classification Analytics", 
     "🛠️ Skill Breakdown", 
-    "⚙ NLP Debug"
+    "⚙️️ NLP Debug"
 ])
 
 # -----------------------------------------------------------------------------
