@@ -11,9 +11,9 @@ import streamlit.components.v1 as components
 from nltk.corpus import stopwords
 
 
-# -------------------------
-#  PAGE CONFIGURATION AREA
-# -------------------------
+# -----------------------------------------------------------------------------
+# 1. Page Configuration
+# -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="SkillMax AI Dashboard",
     page_icon="⚡",
@@ -34,9 +34,9 @@ def md(markup: str):
     st.markdown(cleaned, unsafe_allow_html=True)
 
 
-# --------------------------------
-#  THEME LAYOUT UI GAMIT CSS AREA
-# --------------------------------
+# -----------------------------------------------------------------------------
+# 2. Theme CSS (Includes Full Responsive Mobile & Desktop Styles)
+# -----------------------------------------------------------------------------
 THEME_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
@@ -61,7 +61,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .anchor-target { scroll-margin-top: 96px; }
 [data-testid="stAlert"] { border-radius: 16px; }
 
-/* ---- Fixed top navigation ---- */
+/* ---- Fixed Top Navigation ---- */
 .sm-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 999990; backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px); background: rgba(8,5,17,.8); border-bottom: 1px solid rgba(168,85,247,.12);
   padding: 16px 24px; }
@@ -82,10 +82,8 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
   font-weight: 600; background: rgba(139,92,246,.1); color: #38BDF8; border: 1px solid rgba(139,92,246,.3); }
 .sm-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; margin-right: 8px; animation: smPing 2s cubic-bezier(.4,0,.6,1) infinite; }
 @keyframes smPing { 50% { opacity: .5; } }
-@media (max-width: 900px) { .sm-links { display: none; } }
-@media (max-width: 640px) { .sm-status { display: none; } }
 
-/* ---- Hero ---- */
+/* ---- Hero Section ---- */
 .st-key-hero { position: relative; overflow: hidden; gap: 0 !important; padding: 80px 24px 64px;
   background: radial-gradient(circle at 50% 120%, rgba(139,92,246,.35) 0%, rgba(56,189,248,.15) 35%, rgba(8,5,17,0) 70%); }
 .st-key-hero > div { position: relative; z-index: 2; }
@@ -102,9 +100,8 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .sm-title .grad { background: linear-gradient(to right,#d8b4fe,#38BDF8,#8B5CF6); -webkit-background-clip: text;
   background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
 .sm-desc { max-width: 672px; margin: 0 auto 32px; font-size: 18px; line-height: 28px; font-weight: 500; color: #94a3b8; }
-@media (max-width: 768px) { .sm-title { font-size: 36px; } .sm-desc { font-size: 16px; line-height: 24px; } }
 
-/* ---- Buttons (shared) ---- */
+/* ---- Buttons ---- */
 .stButton button, .stDownloadButton button { font-family: inherit !important; border-radius: 9999px !important;
   transition: all .25s cubic-bezier(.4,0,.2,1) !important; white-space: nowrap; line-height: 1.2; outline: none !important; }
 .stButton button p, .stDownloadButton button p { margin: 0 !important; font-size: inherit !important;
@@ -135,7 +132,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .st-key-btn_download { display: flex !important; flex-direction: column; align-items: flex-end; }
 .st-key-btn_download [data-testid="stDownloadButton"] { width: 100%; }
 
-/* ---- Pill tab bar ---- */
+/* ---- Pill Tab Bar ---- */
 .st-key-tabbar { background: rgba(2,6,23,.8); border: 1px solid rgba(168,85,247,.2); border-radius: 9999px;
   padding: 6px; backdrop-filter: blur(12px); }
 .st-key-tabbar [data-testid="stHorizontalBlock"] { gap: 8px; }
@@ -146,7 +143,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
   background: linear-gradient(to right,#8B5CF6,#7e22ce) !important; box-shadow: 0 4px 20px rgba(139,92,246,.35) !important; }
 .sm-qs-label { font-size: 12px; font-weight: 700; color: #d8b4fe; text-transform: uppercase; letter-spacing: .05em; text-align: right; white-space: nowrap; }
 
-/* ---- Quick sample select ---- */
+/* ---- Quick Sample Select ---- */
 .st-key-sample_choice [data-baseweb="select"] > div { background: #0f172a !important; border: 1px solid rgba(168,85,247,.3) !important;
   border-radius: 9999px !important; min-height: 38px; }
 .st-key-sample_choice [data-baseweb="select"] > div:focus-within { border-color: #38BDF8 !important; }
@@ -156,7 +153,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 [data-baseweb="popover"] li { color: #e2e8f0 !important; font-size: 13px; }
 [data-baseweb="popover"] li:hover { background: rgba(139,92,246,.25) !important; }
 
-/* ---- Glass panels ---- */
+/* ---- Glass Panels ---- */
 .glass-panel, [class*="st-key-panel_"] { background: rgba(18,12,32,.65); backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(168,85,247,.18); border-radius: 20px; padding: 24px; transition: all .3s; }
 .glass-panel:hover, [class*="st-key-panel_"]:hover { border-color: rgba(192,132,252,.4); box-shadow: 0 10px 30px rgba(139,92,246,.18); }
@@ -168,7 +165,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .sm-h3s { font-size: 14px; line-height: 20px; font-weight: 700; color: #d8b4fe; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 16px; }
 .sm-h3s i { margin-right: 8px; }
 
-/* Text input */
+/* Text Input */
 .st-key-input_widget [data-baseweb="textarea"], .st-key-input_widget [data-baseweb="base-input"], .st-key-input_widget textarea { background: rgba(2,6,23,.8) !important; }
 .st-key-input_widget [data-baseweb="textarea"] { border: 1px solid rgba(168,85,247,.2) !important; border-radius: 16px !important; }
 .st-key-input_widget [data-baseweb="textarea"]:focus-within { border-color: #8B5CF6 !important; box-shadow: 0 0 0 1px #8B5CF6 !important; }
@@ -176,7 +173,7 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .st-key-input_widget textarea::placeholder { color: #475569 !important; }
 .st-key-input_widget [data-testid="InputInstructions"] { color: #475569; }
 
-/* Stats + context */
+/* Stats + Context */
 .sm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .sm-stat { background: rgba(2,6,23,.6); padding: 16px; border-radius: 12px; border: 1px solid rgba(168,85,247,.1); text-align: center; }
 .sm-stat-n { display: block; font-size: 30px; line-height: 36px; font-weight: 800; color: #fff; }
@@ -186,13 +183,13 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 .sm-ctx-row:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
 .sm-ctx-k { color: #94a3b8; } .sm-ctx-v { font-weight: 700; color: #e9d5ff; text-align: right; }
 
-/* Results banner */
+/* Results Banner */
 .sm-pill { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 10px; line-height: 16px; font-weight: 800;
   text-transform: uppercase; letter-spacing: .1em; background: rgba(88,28,135,.6); color: #38BDF8; border: 1px solid rgba(168,85,247,.4); margin-bottom: 8px; }
-.sm-role { font-size: 30px; line-height: 36px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 12px; }
+.sm-role { font-size: 30px; line-height: 36px; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 12px; word-break: break-word; }
 .sm-meta { font-size: 12px; line-height: 16px; color: #94a3b8; margin-top: 4px; }
 
-/* Ranking table */
+/* Ranking Table */
 .stMarkdown table.sm-table { width: 100%; border-collapse: collapse; font-size: 12px; color: #cbd5e1; text-align: left; margin: 0; }
 .stMarkdown table.sm-table th { padding: 10px 8px !important; font-size: 10px; font-weight: 700; text-transform: uppercase;
   color: #e9d5ff; border: none !important; border-bottom: 1px solid rgba(168,85,247,.2) !important; background: transparent !important; }
@@ -219,7 +216,6 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 
 /* Debug */
 .sm-debug-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
-@media (max-width: 768px) { .sm-debug-grid { grid-template-columns: 1fr; } }
 .sm-debug-label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
 .sm-debug-box { background: rgba(2,6,23,.8); padding: 16px; border-radius: 12px; font-size: 12px; font-family: ui-monospace, monospace;
   height: 192px; overflow-y: auto; line-height: 1.625; white-space: pre-wrap; word-break: break-word; }
@@ -231,14 +227,38 @@ header[data-testid="stHeader"], [data-testid="stSidebar"], [data-testid="collaps
 
 /* Zero-height JS helper iframe */
 [data-testid="stElementContainer"]:has(iframe[height="0"]) { position: absolute; width: 0; height: 0; overflow: hidden; margin: 0; }
+
+/* ---- Responsive Mobile & Tablet Rules ---- */
+@media (max-width: 900px) { 
+  .sm-links { display: none; } 
+}
+
+@media (max-width: 768px) {
+  .block-container { padding: 4.5rem 1rem 1.5rem !important; }
+  .st-key-hero { padding: 40px 12px 32px !important; }
+  .sm-title { font-size: 32px !important; line-height: 1.2 !important; }
+  .sm-desc { font-size: 14px !important; line-height: 22px !important; }
+  .sm-role { font-size: 22px !important; }
+  .sm-debug-grid { grid-template-columns: 1fr !important; }
+  .sm-qs-label { text-align: left !important; margin-bottom: 4px; }
+}
+
+@media (max-width: 640px) {
+  .sm-status { display: none; }
+  .st-key-tabbar [data-testid="stHorizontalBlock"] { flex-direction: column !important; gap: 6px !important; }
+  .st-key-tabbar { border-radius: 16px !important; }
+  .sm-stat-grid { grid-template-columns: 1fr !important; }
+  .sm-brand-name { font-size: 16px !important; }
+  .sm-brand-sub { font-size: 10px !important; }
+}
 </style>
 """
 st.markdown(THEME_CSS, unsafe_allow_html=True)
 
 
-# -----------------------------
-#  ASSETS KAG NLP HELPERS AREA
-# -----------------------------
+# -----------------------------------------------------------------------------
+# 3. Assets & NLP Helpers
+# -----------------------------------------------------------------------------
 @st.cache_resource
 def load_stopwords():
     nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
@@ -375,9 +395,9 @@ def build_chart(rankings: list) -> go.Figure:
     return fig
 
 
-# -------------------------------
-#  SAMPLE JOB KAG CALLBACKS AREA
-# -------------------------------
+# -----------------------------------------------------------------------------
+# 4. State & Callbacks
+# -----------------------------------------------------------------------------
 SAMPLES = {
     "Data Scientist": (
         "We are seeking a Senior Data Scientist with strong Python, SQL, and Machine Learning "
@@ -442,14 +462,14 @@ def reset_workspace():
     st.session_state["analysis"] = None
 
 
-# --------------------------------------
-#  TOP NAVIGATION KAG HERO SECTION AREA
-# --------------------------------------
+# -----------------------------------------------------------------------------
+# 5. Top Navigation + Hero Section
+# -----------------------------------------------------------------------------
 md("""
 <div class="sm-nav"><div class="sm-nav-inner">
   <div class="sm-brand">
     <div class="sm-logo"><i class="fa-solid fa-bolt"></i></div>
-    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos College of IT</span></div>
+    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos</span></div>
   </div>
   <div class="sm-links">
     <a href="#overview" data-scroll="overview">DATA SCIENCE PROJECT 2026</a>
@@ -545,9 +565,9 @@ if not assets_loaded:
     )
     st.stop()
 
-# ----------------------------------------
-#  TAB BAR KAG QUICK SAMPLE SELECTOR AREA
-# ----------------------------------------
+# -----------------------------------------------------------------------------
+# 6. Tab Bar + Quick Sample Selector
+# -----------------------------------------------------------------------------
 md('<div id="analyzer" class="anchor-target"></div>')
 
 bar_col, sel_col = st.columns([3.4, 1.5], vertical_alignment="center")
@@ -586,9 +606,9 @@ with sel_col:
 
 active = st.session_state["active_tab"]
 
-# -------------------------------
-#  JOB INPUT & ANALYSIS TAB AREA
-# -------------------------------
+# -----------------------------------------------------------------------------
+# 7. TAB 1 - Job Input & Analysis
+# -----------------------------------------------------------------------------
 if active == "input":
     left, right = st.columns([2, 1], gap="medium")
 
@@ -687,9 +707,9 @@ if active == "input":
                     args=("skills",),
                 )
 
-# -----------------------------------
-#  CLASSIFICATION ANALYTICS TAB AREA
-# -----------------------------------
+# -----------------------------------------------------------------------------
+# 8. TAB 2 - Classification Analytics
+# -----------------------------------------------------------------------------
 elif active == "analytics":
     analysis = st.session_state["analysis"]
     left, right = st.columns([2, 1], gap="medium")
@@ -735,9 +755,9 @@ elif active == "analytics":
         </div>
         """)
 
-# -----------------------------------------
-#  SKILL BREAKDOWN & EXPORT SKILL TAB AREA
-# -----------------------------------------
+# -----------------------------------------------------------------------------
+# 9. TAB 3 - Skill Breakdown & Export
+# -----------------------------------------------------------------------------
 elif active == "skills":
     analysis = st.session_state["analysis"]
     with st.container(key="panel_skills"):
@@ -777,9 +797,9 @@ elif active == "skills":
 
         md(f'<div class="sm-skillbox">{pills}</div>')
 
-# --------------------
-#  NLP DEBUG TAB AREA
-# --------------------
+# -----------------------------------------------------------------------------
+# 10. TAB 4 - NLP Debug
+# -----------------------------------------------------------------------------
 elif active == "debug":
     analysis = st.session_state["analysis"]
     raw = _html.escape(analysis["raw"]) if analysis else "No text loaded."
@@ -806,9 +826,9 @@ elif active == "debug":
     </div>
     """)
 
-# ------------
-# FOOTER AREA
-# ------------
+# -----------------------------------------------------------------------------
+# 11. Footer
+# -----------------------------------------------------------------------------
 md("""
 <div id="metadata" class="sm-footer anchor-target">
   <div>⚡ SkillMax AI Assistant &bull; Developed by <strong>Group DATA-MAX</strong></div>
