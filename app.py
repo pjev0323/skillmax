@@ -404,7 +404,7 @@ SAMPLES = {
         "experience. Must be proficient in pandas, scikit-learn, PyTorch, neural networks, "
         "deep learning, feature engineering, and interactive data visualization using Tableau or PowerBI."
     ),
-    "DevOps Engineer": (
+    "Big Data Engineer": (
         "Looking for a Cloud DevOps Engineer experienced in AWS, Docker, Kubernetes, Terraform, "
         "Jenkins, CI/CD automated pipelines, bash scripting, and Linux system administration. "
         "Experience with Ansible and Prometheus is a plus."
