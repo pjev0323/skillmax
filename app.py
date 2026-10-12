@@ -414,7 +414,7 @@ SAMPLES = {
         "Express, HTML5, CSS3, RESTful APIs, GraphQL, and MongoDB database design. "
         "AWS experience preferred."
     ),
-    "Cybersecurity Analyst": (
+    "InfoSec Analyst": (
         "Seeking a Cybersecurity Analyst to monitor security posture, conduct vulnerability "
         "assessments, analyze malware, configure firewalls, manage SIEM tools, and enforce "
         "compliance frameworks like ISO27001."
