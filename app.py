@@ -427,7 +427,7 @@ SAMPLES = {
         "experience. Must be proficient in pandas, scikit-learn, PyTorch, neural networks, "
         "deep learning, feature engineering, and interactive data visualization using Tableau or PowerBI."
     ),
-    "DevOps Engineer": (
+    "Big Data Engineer": (
         "Looking for a Cloud DevOps Engineer experienced in AWS, Docker, Kubernetes, Terraform, "
         "Jenkins, CI/CD automated pipelines, bash scripting, and Linux system administration. "
         "Experience with Ansible and Prometheus is a plus."
@@ -437,7 +437,7 @@ SAMPLES = {
         "Express, HTML5, CSS3, RESTful APIs, GraphQL, and MongoDB database design. "
         "AWS experience preferred."
     ),
-    "Cybersecurity Analyst": (
+    "InfoSec Analyst": (
         "Seeking a Cybersecurity Analyst to monitor security posture, conduct vulnerability "
         "assessments, analyze malware, configure firewalls, manage SIEM tools, and enforce "
         "compliance frameworks like ISO27001."
@@ -492,7 +492,7 @@ md("""
 <div class="sm-nav"><div class="sm-nav-inner">
   <div class="sm-brand">
     <div class="sm-logo"><i class="fa-solid fa-bolt"></i></div>
-    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos College of IT</span></div>
+    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos</span></div>
   </div>
   <div class="sm-links">
     <a href="#overview" data-scroll="overview">DATA SCIENCE PROJECT 2026</a>
