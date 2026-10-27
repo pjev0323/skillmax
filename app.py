@@ -8,7 +8,6 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
-from nltk.corpus import stopwords
 
 
 # -------------------------
@@ -260,18 +259,36 @@ st.markdown(THEME_CSS, unsafe_allow_html=True)
 #  ASSETS KAG NLP HELPERS AREA
 # -----------------------------
 @st.cache_resource
-@st.cache_resource
 def load_stopwords():
     nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
     os.makedirs(nltk_data_dir, exist_ok=True)
     nltk.data.path.append(nltk_data_dir)
     
-    # Download stopwords directly
-    nltk.download("stopwords", download_dir=nltk_data_dir, quiet=True)
-    
-    # Import stopwords AFTER downloading to ensure NLTK locates it
-    from nltk.corpus import stopwords
-    return set(stopwords.words("english"))
+    try:
+        nltk.download("stopwords", download_dir=nltk_data_dir, quiet=True)
+        from nltk.corpus import stopwords
+        return set(stopwords.words("english"))
+    except Exception:
+        # Fallback stopword set to prevent crash on Streamlit Cloud
+        return {
+            "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", 
+            "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", 
+            "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", 
+            "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", 
+            "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", 
+            "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", 
+            "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", 
+            "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", 
+            "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", 
+            "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", 
+            "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", 
+            "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", 
+            "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", 
+            "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", 
+            "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", 
+            "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", 
+            "yourself", "yourselves"
+        }
 
 
 @st.cache_resource
@@ -410,7 +427,7 @@ SAMPLES = {
         "experience. Must be proficient in pandas, scikit-learn, PyTorch, neural networks, "
         "deep learning, feature engineering, and interactive data visualization using Tableau or PowerBI."
     ),
-    "Big Data Engineer": (
+    "DevOps Engineer": (
         "Looking for a Cloud DevOps Engineer experienced in AWS, Docker, Kubernetes, Terraform, "
         "Jenkins, CI/CD automated pipelines, bash scripting, and Linux system administration. "
         "Experience with Ansible and Prometheus is a plus."
@@ -420,7 +437,7 @@ SAMPLES = {
         "Express, HTML5, CSS3, RESTful APIs, GraphQL, and MongoDB database design. "
         "AWS experience preferred."
     ),
-    "InfoSec Analyst": (
+    "Cybersecurity Analyst": (
         "Seeking a Cybersecurity Analyst to monitor security posture, conduct vulnerability "
         "assessments, analyze malware, configure firewalls, manage SIEM tools, and enforce "
         "compliance frameworks like ISO27001."
@@ -475,7 +492,7 @@ md("""
 <div class="sm-nav"><div class="sm-nav-inner">
   <div class="sm-brand">
     <div class="sm-logo"><i class="fa-solid fa-bolt"></i></div>
-    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos</span></div>
+    <div><span class="sm-brand-name">SkillMax AI</span><span class="sm-brand-sub">UNO - Recoletos College of IT</span></div>
   </div>
   <div class="sm-links">
     <a href="#overview" data-scroll="overview">DATA SCIENCE PROJECT 2026</a>
