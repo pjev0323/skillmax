@@ -260,11 +260,17 @@ st.markdown(THEME_CSS, unsafe_allow_html=True)
 #  ASSETS KAG NLP HELPERS AREA
 # -----------------------------
 @st.cache_resource
+@st.cache_resource
 def load_stopwords():
     nltk_data_dir = os.path.join(os.path.expanduser("~"), "nltk_data")
     os.makedirs(nltk_data_dir, exist_ok=True)
     nltk.data.path.append(nltk_data_dir)
+    
+    # Download stopwords directly
     nltk.download("stopwords", download_dir=nltk_data_dir, quiet=True)
+    
+    # Import stopwords AFTER downloading to ensure NLTK locates it
+    from nltk.corpus import stopwords
     return set(stopwords.words("english"))
 
 
