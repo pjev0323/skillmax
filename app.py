@@ -855,6 +855,7 @@ elif active == "debug":
 md("""
 <div id="metadata" class="sm-footer anchor-target">
   <div>⚡ SkillMax AI Assistant &bull; Developed by <strong>Group DATA-MAX</strong></div>
+  <div>Subject Instructor: <strong>Maxil Urocay/strong></div>
   <div>College of Information Technology &bull; University of Negros Occidental - Recoletos</div>
 </div>
 """)
